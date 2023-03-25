@@ -3,6 +3,10 @@ class Point {
 		this.x = x;
 		this.y = y;
 	}
+
+	get toString() {
+		this.x + ", " + this.y;
+	}
 }
 
 class RectF {
@@ -10,8 +14,6 @@ class RectF {
 	top = 0.0;
 	right = 0.0;
 	bottom = 0.0;
-
-	//left = top = right = bottom = 0.0;
 
 	constructor(left, top, right, bottom) {
 		this.left = left;
@@ -26,6 +28,10 @@ class RectF {
 
 	get height() {
 		return this.bottom - this.top;
+	}
+
+	get toString() {
+		return `(${this.left}, ${this.top}) : (${this.right}, ${this.bottom})`
 	}
 }
 
@@ -48,21 +54,48 @@ function drawPoints(ctx, points, color) {
 	ctx.fill()
 }
 
+function drawCanvas(ctx, ratio, canvasRect) {
+	ctx.beginPath()
+	ctx.rect(canvasRect.left, canvasRect.top, canvasRect.width, canvasRect.height)
+	ctx.closePath()
+	ctx.clip()
+	ctx.fillRect(0, 0, canvasW, canvasH)
+}
+
+function drawBackground(ctx, canvasRect) {
+	let data = calculateScaleForBg(bg, canvasRect);
+	let rect = data.rect;
+
+	ctx.drawImage(bg, rect.left, rect.top, rect.width, rect.height, canvasRect.left, canvasRect.top, canvasRect.width, canvasRect.height);
+}
+
+function drawContent() {
+}
+
 function redraw(spacing, scaling) {
 	ctx.clearRect(0, 0, canvasW, canvasH)
 
-	/*var gradientColor = ctx.createLinearGradient(0, 0, canvasW, canvasH)
-	gradientColor.addColorStop(0, "#36D1DC")
-	gradientColor.addColorStop(1, "#5B86E5")
-	ctx.fillStyle = gradientColor
-	ctx.fillRect(0, 0, canvasW, canvasH)*/
+	let pattern = ctx.createPattern(bgImg, "repeat")
+	ctx.fillStyle = pattern
+	ctx.rect(0, 0, canvasW, canvasH)
+	ctx.fill()
 
-	let data = calculateScaleForBg(bg, {width: canvasW, height: canvasH});
-	let rect = data.rect;
-	let scale = data.scale;
-//	console.log(imageScale)
-//	ctx.transform(imageScale, 0, 0, imageScale, 0, 0)
-	ctx.drawImage(bg, 0, 0, bg.width, bg.height, rect.left, rect.top, rect.width, rect.height);
+	let canvasRect = new RectF(0.0, 0.0, 1.0, 1.0)
+	let ratio = 16/16.0
+	calculateCanvasRect(ratio, {width: canvasW, height: canvasH}, canvasRect)
+
+	ctx.save()
+	drawCanvas(ctx, ratio, canvasRect)
+	drawBackground(ctx, canvasRect)
+	ctx.restore()
+
+	let canvasRatio = canvasRect.width / canvasRect.height;
+
+	if(canvasRatio <= 1.0)
+		scaling = scaling*canvasRatio
+	else {
+		scaling = scaling/canvasRatio
+	}
 
 	ctx.save()
 	ctx.translate(canvasW/2.0, canvasH/2.0)
@@ -81,28 +114,41 @@ function calculateScaleForBg(bg, canvas) {
 	let canvasW = canvas.width;
 	let canvasH = canvas.height;
 
-	let imageRatio = imageW / (imageH*1.0);
 	let canvasRatio = canvasW / (canvasH*1.0);
 
-	if(imageW >= canvasW) {
-		canvasH = imageW / imageRatio;
-	} else if(imageH >= canvasH) {
-		canvasW = imageRatio * canvasH;
-	} else {
-		canvasH = imageW / imageRatio;
+	let tempW = Math.min(imageW, imageH)
+	let tempH = tempW / canvasRatio;
+
+	if(tempH > imageH) {
+		tempH = Math.min(imageW, imageH);
+		tempW = tempH * canvasRatio;
 	}
 
-	let left = (canvas.width - canvasW)/2.0;
-	let top = (canvas.height - canvasH)/2.0;
+	let left = Math.round((imageW - tempW)/2.0);
+	let top = Math.round((imageH - tempH)/2.0);
 
-	let newImageRect = new RectF(left, top, left+canvasW, top+canvasH);
+	let newImageRect = new RectF(left, top, left+tempW, top+tempH);
 
-	console.log(imageRatio + ", " + canvasRatio + ", " + canvasW/(imageW*1.0) + ", " + canvasH/(imageH*1.0));
+	return {rect: newImageRect};
+}
 
-	let scale = Math.max(canvasW/(imageW*1.0), canvasH/(imageH*1.0));
+function calculateCanvasRect(ratio, canvas, canvasRect) {
+	let width = canvas.width;
+	let height = canvas.height;
 
-	//return scale;
-	return {rect: newImageRect, scale: scale};
+	if(ratio >= 1.0) {
+		height = width/ratio;
+	} else {
+		width = height*ratio;
+	}
+
+	let left = (canvas.width - width)/2.0;
+	let top = (canvas.height - height)/2.0;
+
+	canvasRect.left = left;
+	canvasRect.top = top;
+	canvasRect.right = left + width;
+	canvasRect.bottom = top + height;
 }
 
 var canvas = document.getElementById("canvas")
@@ -119,24 +165,25 @@ var bg = new Image();
 var spcaingSlider = document.getElementById("spcaingSlider")
 spcaingSlider.addEventListener("input", evt => {
 	spacing = evt.target.value / 1000.0
-
-	console.log(spacing)
 	redraw(spacing, scaling)
 })
 
 var scalingSlider = document.getElementById("scalingSlider")
 scalingSlider.addEventListener("input", evt => {
 	scaling = evt.target.value / 100.0
-	console.log(scaling)
 	redraw(spacing, scaling)
 })
 
 function main() {
-	bg.src  ="./res/bg2.jpg";
+	bg.src  ="./res/bg.jpg";
 	bg.addEventListener("load", () => {
-		console.log("image loaded");
 		redraw(spacing, scaling);
 	});
 }
 
-main()
+let bgImg = new Image()
+bgImg.src = "./res/block.jpg";
+
+bgImg.addEventListener("load", ()=> {
+	main()
+})
