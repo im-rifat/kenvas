@@ -1,17 +1,98 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Collage with Pure JS</title>
+    <title>Kollage Maker</title>
+
+    <style>
+      li {
+        margin: 0 0;
+        float: left;
+        width: 80px;
+        height: 50px;
+        display: block;
+      }
+      li:active {
+        background: green;
+      }
+
+      #grad {
+        height: 50px;
+        width: 50px;
+        background-image: linear-gradient(to right, #ffafbd, #ffc3a0);
+      }
+
+      #solid {
+        height: 50px;
+        width: 50px;
+        background-color: skyblue;
+      }
+
+      #image {
+        height: 50px;
+        width: 50px;
+      }
+    </style>
   </head>
 
   <body>
-    <p>Spacing:</p>
-    <input type="range" min="1" max="100" value="10" id="spcaingSlider" />
+    <div
+      class="container"
+      style="display: flex; height: 600px; background-color: aquamarine"
+    >
+      <div style="width: 30%; background-color: snow; display: grid">
+        <p>Spacing:</p>
+        <input type="range" min="1" max="100" value="10" id="spcaingSlider" />
 
-    <p>Scaling:</p>
-    <input type="range" min="25" max="100" value="100" id="scalingSlider" />
+        <p>Scaling:</p>
+        <input type="range" min="25" max="100" value="100" id="scalingSlider" />
 
-    <canvas width="600" height="600" id="canvas" />
+        <div>
+          <p>Ratio:</p>
+          <ul id="ratioList">
+            <li>1:1</li>
+            <li>3:4</li>
+            <li>3:2</li>
+            <li>4:5</li>
+            <li>9:16</li>
+            <li>16:9</li>
+          </ul>
+        </div>
+
+        <div style="float: left">
+          <p>Background:</p>
+          <ul id="bgList">
+            <li id="solid"></li>
+            <li id="grad"></li>
+            <li id="image">
+              <img src="./res/bg.jpg" width="50" height="50" />
+            </li>
+          </ul>
+        </div>
+
+        <div style="float: left">
+          <p>Template</p>
+          <ul id="templateList">
+            <li>Template 1</li>
+            <li>Template 2</li>
+          </ul>
+        </div>
+
+        <div>
+          <a download="demo.jpg" href="" id="exportBtn">Export As Image</a>
+        </div>
+      </div>
+
+      <div
+        style="
+          flex-grow: 1;
+          background-color: whitesmoke;
+          display: flex;
+          justify-content: center;
+        "
+      >
+        <canvas width="600" height="600" id="canvas" style="margin: auto" />
+      </div>
+    </div>
 
     <script src="main.js" />
   </body>
